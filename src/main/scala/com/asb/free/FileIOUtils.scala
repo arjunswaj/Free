@@ -13,9 +13,13 @@ object FileIOUtils {
   sealed trait FileIO[A]
 
   case class GetFilePath(filename: String) extends FileIO[Path]
+
   case class GetBufferedReader(path: Path) extends FileIO[BufferedReader]
+
   case class CloseReader(reader: Reader) extends FileIO[Unit]
+
   case class GetBufferedWriter(path: Path) extends FileIO[BufferedWriter]
+
   case class CloseWriter(writer: Writer) extends FileIO[Unit]
 
   class FileIOs[F[_]](implicit I: InjectK[FileIO, F]) {

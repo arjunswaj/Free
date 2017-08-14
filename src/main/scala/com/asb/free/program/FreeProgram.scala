@@ -16,8 +16,8 @@ object FreeProgram {
   val filesOrCsvInterpreter: FilesOrCSV ~> Id = FilesInterpreter or CSVInterpreter
   val intepreter: Script ~> Id = RecordProcessorInterpreter or filesOrCsvInterpreter
 
-  def program[A] (fileName: String)(implicit F: FileIOs[Script], CI: CSVIOs[Script],
-              C: CSVRecordsProcessors[Script]): Free[Script, Stream[A]] = {
+  def program[A](fileName: String)(implicit F: FileIOs[Script], CI: CSVIOs[Script],
+                                   C: CSVRecordsProcessors[Script]): Free[Script, Stream[A]] = {
     import C._
     import CI._
     import F._

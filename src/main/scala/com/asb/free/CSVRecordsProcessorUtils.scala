@@ -29,8 +29,8 @@ object CSVRecordsProcessorUtils {
 
   def program(implicit S: SearchEngineRecordProcessors[SearchOrDelay],
               D: Delays[SearchOrDelay], csvRecord: CSVRecord): Free[SearchOrDelay, SEResult] = {
-    import S._
     import D._
+    import S._
     for {
       _ <- sleep(200)
       res <- processRecord(csvRecord)

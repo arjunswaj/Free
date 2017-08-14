@@ -1,8 +1,8 @@
 package com.asb.free.search.engine
 
-import cats.{Id, InjectK, ~>}
 import cats.free.Free
 import cats.free.Free.inject
+import cats.{Id, InjectK, ~>}
 import org.apache.commons.csv.CSVRecord
 
 object GoogleTools {

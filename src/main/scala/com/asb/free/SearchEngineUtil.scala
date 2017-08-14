@@ -1,9 +1,9 @@
 package com.asb.free
 
-import cats.{Id, InjectK, ~>}
 import cats.data.EitherK
 import cats.free.Free
 import cats.free.Free.inject
+import cats.{Id, InjectK, ~>}
 import com.asb.free.search.engine.GoogleTools.{GoogleInterpreter, GoogleUtil, GoogleUtils}
 import com.asb.free.search.engine.MicrosoftTools.{MicrosoftInterpreter, MicrosoftUtil, MicrosoftUtils}
 import org.apache.commons.csv.CSVRecord
