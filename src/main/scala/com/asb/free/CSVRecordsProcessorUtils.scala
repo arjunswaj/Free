@@ -41,9 +41,10 @@ object CSVRecordsProcessorUtils {
 
   object RecordProcessorInterpreter extends (CSVRecordsProcessor ~> Id) {
     override def apply[A](fa: CSVRecordsProcessor[A]): Id[A] = fa match {
-      case ProcessRecords(csvRecords) => csvRecords
-        .map(csvRecord => program(SearchEngineRecordProcessors[SearchOrDelay], Delays[SearchOrDelay], csvRecord)
-          .foldMap(interpreter))
+      case ProcessRecords(csvRecords) =>
+        implicit val searchOrDelay = SearchEngineRecordProcessors[SearchOrDelay]
+        implicit val delays = Delays[SearchOrDelay]
+        csvRecords.map(implicit csvRecord => program.foldMap(interpreter))
     }
   }
 

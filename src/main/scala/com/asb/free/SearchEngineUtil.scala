@@ -30,7 +30,7 @@ object SearchEngineUtil {
   type GoogleOrMicrosoft[A] = EitherK[GoogleUtil, MicrosoftUtil, A]
   val interpreter: GoogleOrMicrosoft ~> Id = GoogleInterpreter or MicrosoftInterpreter
 
-  def program(implicit G: GoogleUtils[GoogleOrMicrosoft], M: MicrosoftUtils[GoogleOrMicrosoft], csvRecord: CSVRecord):
+  def program(csvRecord: CSVRecord)(implicit G: GoogleUtils[GoogleOrMicrosoft], M: MicrosoftUtils[GoogleOrMicrosoft]):
   Free[GoogleOrMicrosoft, SEResult] = {
     import G._
     import M._
@@ -42,8 +42,10 @@ object SearchEngineUtil {
 
   object SearchEngineInterpreter extends (SearchTools ~> Id) {
     override def apply[A](fa: SearchTools[A]): Id[A] = fa match {
-      case DoSearch(csvRecord) => program(GoogleUtils[GoogleOrMicrosoft],
-        MicrosoftUtils[GoogleOrMicrosoft], csvRecord).foldMap(interpreter)
+      case DoSearch(csvRecord) =>
+        implicit val googleUtils = GoogleUtils[GoogleOrMicrosoft]
+        implicit val microsoftUtils = MicrosoftUtils[GoogleOrMicrosoft]
+        program(csvRecord).foldMap(interpreter)
     }
   }
 

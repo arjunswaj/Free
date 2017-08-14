@@ -16,8 +16,8 @@ object FreeProgram {
   val filesOrCsvInterpreter: FilesOrCSV ~> Id = FilesInterpreter or CSVInterpreter
   val intepreter: Script ~> Id = RecordProcessorInterpreter or filesOrCsvInterpreter
 
-  def program[A](implicit F: FileIOs[Script], CI: CSVIOs[Script],
-              C: CSVRecordsProcessors[Script], fileName: String): Free[Script, Stream[A]] = {
+  def program[A] (fileName: String)(implicit F: FileIOs[Script], CI: CSVIOs[Script],
+              C: CSVRecordsProcessors[Script]): Free[Script, Stream[A]] = {
     import C._
     import CI._
     import F._
@@ -31,8 +31,8 @@ object FreeProgram {
   }
 
   def main(args: Array[String]): Unit = {
-    val result = program[SEResult](FileIOs[Script], CSVIOs[Script], CSVRecordsProcessors[Script], "asb.csv")
-      .foldMap(intepreter)
+    implicit val C = CSVRecordsProcessors[Script]
+    val result = program[SEResult]("asb.csv").foldMap(intepreter)
     result.foreach(k => println(k))
   }
 
