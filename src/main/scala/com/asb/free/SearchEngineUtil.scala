@@ -31,7 +31,7 @@ object SearchEngineUtil {
   val interpreter: GoogleOrMicrosoft ~> Id = GoogleInterpreter or MicrosoftInterpreter
 
   def program(implicit G: GoogleUtils[GoogleOrMicrosoft], M: MicrosoftUtils[GoogleOrMicrosoft], csvRecord: CSVRecord):
-  Free[Free[GoogleOrMicrosoft, SEResult] = {
+  Free[GoogleOrMicrosoft, SEResult] = {
     import G._
     import M._
     for {
