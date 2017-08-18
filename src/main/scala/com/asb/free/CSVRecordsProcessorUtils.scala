@@ -4,7 +4,7 @@ import cats.data.EitherK
 import cats.free.Free
 import cats.free.Free.inject
 import cats.{Id, InjectK, ~>}
-import com.asb.free.SearchEngineUtil.{SEResult, SearchEngineInterpreter, SearchEngineRecordProcessors, SearchTools}
+import com.asb.free.SearchEngineUtil._
 import com.asb.free.time.DelayUtils.{DelayInterpreter, DelayUtil, Delays}
 import org.apache.commons.csv.CSVRecord
 
@@ -28,7 +28,7 @@ object CSVRecordsProcessorUtils {
   type SearchOrDelay[A] = EitherK[SearchTools, DelayUtil, A]
 
   def program(implicit S: SearchEngineRecordProcessors[SearchOrDelay],
-              D: Delays[SearchOrDelay], csvRecord: CSVRecord): Free[SearchOrDelay, SEResult] = {
+              D: Delays[SearchOrDelay], csvRecord: CSVRecord): Free[SearchOrDelay, Free[GoogleOrMicrosoft, SEResult]] = {
     import D._
     import S._
     for {

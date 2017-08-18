@@ -14,11 +14,11 @@ object SearchEngineUtil {
 
   sealed trait SearchTools[A]
 
-  case class DoSearch(csvRecord: CSVRecord) extends SearchTools[SEResult]
+  case class DoSearch(csvRecord: CSVRecord) extends SearchTools[Free[GoogleOrMicrosoft, SEResult]]
 
   class SearchEngineRecordProcessors[F[_]](implicit I: InjectK[SearchTools, F]) {
 
-    def processRecord(csvRecord: CSVRecord): Free[F, SEResult] =
+    def processRecord(csvRecord: CSVRecord): Free[F, Free[GoogleOrMicrosoft, SEResult]] =
       inject[SearchTools, F](DoSearch(csvRecord))
 
   }
@@ -41,11 +41,14 @@ object SearchEngineUtil {
   }
 
   object SearchEngineInterpreter extends (SearchTools ~> Id) {
-    override def apply[A](fa: SearchTools[A]): Id[A] = fa match {
+    implicit val G: GoogleUtils[GoogleOrMicrosoft] = GoogleUtils[GoogleOrMicrosoft]
+    implicit val M: MicrosoftUtils[GoogleOrMicrosoft] = MicrosoftUtils[GoogleOrMicrosoft]
+    def apply[A](fa: SearchTools[A]): Id[A] = fa match {
       case DoSearch(csvRecord) =>
-        implicit val googleUtils = GoogleUtils[GoogleOrMicrosoft]
-        implicit val microsoftUtils = MicrosoftUtils[GoogleOrMicrosoft]
-        program(csvRecord).foldMap(interpreter)
+        for {
+          goog <- G.searchGoogle(csvRecord)
+          micr <- M.searchMicrosoft(csvRecord)
+        } yield SEResult(goog, micr)
     }
   }
 
