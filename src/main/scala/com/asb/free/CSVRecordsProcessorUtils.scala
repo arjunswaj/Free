@@ -12,12 +12,27 @@ object CSVRecordsProcessorUtils {
 
   sealed trait CSVRecordsProcessor[A]
 
-  case class ProcessRecords[A](csvRecords: Stream[CSVRecord]) extends CSVRecordsProcessor[Stream[A]]
+  case class ProcessRecord[A](csvRecord: CSVRecord, a: Option[A]) extends CSVRecordsProcessor[A]
 
   class CSVRecordsProcessors[F[_]](implicit I: InjectK[CSVRecordsProcessor, F]) {
 
-    def processRecords[A](csvRecords: Stream[CSVRecord]): Free[F, Stream[A]] =
-      inject[CSVRecordsProcessor, F](ProcessRecords(csvRecords))
+    private def sequence[S[_], A](fs: Stream[Free[S, A]]): Free[S, Stream[A]] =
+      fs.reverse.foldLeft[Free[S, Stream[A]]](Free.pure[S, Stream[A]](Stream()))((b, a) => map2(a, b)(_ #:: _))
+
+    private def map2[S[_], A, B, C](ra: Free[S, A], rb: Free[S, B])(f: (A, B) => C): Free[S, C] = for {
+      a <- ra
+      b <- rb
+    } yield f(a, b)
+
+    def processRecord[A](csvRecord: CSVRecord): Free[F, A] =
+      inject[CSVRecordsProcessor, F](ProcessRecord[A](csvRecord, None))
+
+    def processRecords[A](csvRecords: Stream[CSVRecord]): Free[F, Stream[A]] = {
+      val res = for {
+        csvRecord <- csvRecords
+      } yield processRecord[A](csvRecord)
+      sequence[F, A](res)
+    }
 
   }
 
@@ -27,8 +42,8 @@ object CSVRecordsProcessorUtils {
 
   type SearchOrDelay[A] = EitherK[SearchTools, DelayUtil, A]
 
-  def program(implicit S: SearchEngineRecordProcessors[SearchOrDelay],
-              D: Delays[SearchOrDelay], csvRecord: CSVRecord): Free[SearchOrDelay, SEResult] = {
+  def program(csvRecord: CSVRecord)(implicit S: SearchEngineRecordProcessors[SearchOrDelay],
+                                    D: Delays[SearchOrDelay]): Free[SearchOrDelay, SEResult] = {
     import D._
     import S._
     for {
@@ -41,10 +56,10 @@ object CSVRecordsProcessorUtils {
 
   object RecordProcessorInterpreter extends (CSVRecordsProcessor ~> Id) {
     override def apply[A](fa: CSVRecordsProcessor[A]): Id[A] = fa match {
-      case ProcessRecords(csvRecords) =>
+      case ProcessRecord(csvRecord, _: Option[SEResult]) =>
         implicit val searchOrDelay = SearchEngineRecordProcessors[SearchOrDelay]
         implicit val delays = Delays[SearchOrDelay]
-        csvRecords.map(implicit csvRecord => program.foldMap(interpreter))
+        program(csvRecord).foldMap(interpreter)
     }
   }
 
